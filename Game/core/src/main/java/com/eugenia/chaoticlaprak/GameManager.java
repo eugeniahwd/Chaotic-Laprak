@@ -14,6 +14,7 @@ public class GameManager {
     public float elapsedTime = 0f;
     public boolean gameOver = false;
     public boolean hasBoughtKopi = false;
+    public float countdownTime = 90f;
 
     // Konstanta
     public static final float ENERGY_SLOWDOWN_THRESHOLD = 4f;
@@ -51,7 +52,8 @@ public class GameManager {
     public void update(float delta) {
         if (!gameOver) {
             elapsedTime += delta;
-            // Energi berkurang perlahan seiring waktu
+            countdownTime -= delta;
+            if (countdownTime < 0) countdownTime = 0;
             energy -= 0.3f * delta;
             if (energy < 0) energy = 0;
             notifyObservers();

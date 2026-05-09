@@ -17,11 +17,6 @@ public class Kantin {
     }
 
     public void render(OrthographicCamera camera) {
-        shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(1, 0.5f, 0, 1); // orange
-        shapeRenderer.rect(x, y, SIZE, SIZE);
-        shapeRenderer.end();
     }
 
     public void dispose() {

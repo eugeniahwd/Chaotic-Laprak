@@ -1,22 +1,31 @@
 package com.eugenia.chaoticlaprak;
 
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class NPC {
     public float x, y;
-    private float speed = 40f;
-    float startX;
-    private float range = 50f;
-    int direction = 1;
-    private ShapeRenderer shapeRenderer;
+    public float startX;
+    public int direction = 1;
     public String name;
     public boolean isDosen;
     public boolean signed = false;
+    public MoodState moodState;
     private MovementStrategy movementStrategy;
 
-    // Untuk dosen/aslab
-    public MoodState moodState;
+    // Sprite
+    private Texture spriteSheet;
+    private TextureRegion currentFrame;
+    private static final int FRAME_W = 20;
+    private static final int FRAME_H = 32;
+
+    // Fallback shape renderer kalau tidak ada sprite
+    private ShapeRenderer shapeRenderer;
+    private boolean hasSprite = false;
 
     public static final float SIZE = 32f;
 
@@ -24,12 +33,65 @@ public class NPC {
         this.x = x;
         this.y = y;
         this.startX = x;
-        this.movementStrategy = new PacingMovement(50f, 40f);
         this.name = name;
         this.isDosen = isDosen;
+        this.moodState = Math.random() < 0.5 ? new BadMoodState() : new GoodMoodState();
+        this.movementStrategy = new PacingMovement(35f, 30f);
         this.shapeRenderer = new ShapeRenderer();
 
-        this.moodState = Math.random() < 0.5 ? new BadMoodState() : new GoodMoodState();
+        // Load sprite berdasarkan nama
+        String spritePath = getSpritePathForName(name);
+        if (spritePath != null) {
+            try {
+                spriteSheet = new Texture(Gdx.files.internal(spritePath));
+                // Default: frame pertama (baris 0 = menghadap bawah, kolom 1 = idle)
+                currentFrame = new TextureRegion(spriteSheet, FRAME_W, 0, FRAME_W, FRAME_H);
+                hasSprite = true;
+            } catch (Exception e) {
+                hasSprite = false;
+            }
+            System.out.println("Sprite loaded for " + name + ": " + hasSprite);
+        }
+    }
+
+    private String getSpritePathForName(String name) {
+        switch (name) {
+            case "Mr. Astha": return "astha.png";
+            case "Mrs. Riri": return "riri.png";
+            case "BN": return "bn.png";
+            case "NL": return "nl.png";
+            case "AF": return "af.png";
+            case "NPC1": return "npc.png";
+            case "NPC2": return "npc2.png";
+            default: return null;
+        }
+    }
+
+    public void update(float delta) {
+        movementStrategy.move(this, delta);
+
+        // Update frame berdasarkan arah gerak
+        if (hasSprite) {
+            int col = 1; // kolom tengah = idle
+            // baris: 0=bawah, 1=kiri, 2=kanan, 3=atas
+            int row = direction == 1 ? 2 : 1; // kanan atau kiri
+            currentFrame = new TextureRegion(spriteSheet,
+                col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H);
+        }
+    }
+
+    public void render(SpriteBatch batch, OrthographicCamera camera) {
+        if (hasSprite) {
+            batch.draw(currentFrame, x, y, 12, 18);
+        } else {
+            shapeRenderer.setProjectionMatrix(camera.combined);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(isDosen ?
+                new com.badlogic.gdx.graphics.Color(0, 0, 1, 1) :
+                new com.badlogic.gdx.graphics.Color(0, 1, 0, 1));
+            shapeRenderer.rect(x, y, SIZE, SIZE);
+            shapeRenderer.end();
+        }
     }
 
     public boolean canSign() { return moodState.canSign(); }
@@ -38,26 +100,12 @@ public class NPC {
         return moodState.getBubbleText();
     }
     public void giveCemilan() { moodState = moodState.improve(); }
-
     public void setMovementStrategy(MovementStrategy strategy) {
         this.movementStrategy = strategy;
     }
 
-    public void update(float delta) {
-        movementStrategy.move(this, delta);
-    }
-
-    public void render(OrthographicCamera camera) {
-        shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        // Dosen = biru, Aslab = hijau, NPC biasa = kuning
-        if (isDosen) shapeRenderer.setColor(0, 0, 1, 1);
-        else shapeRenderer.setColor(0, 1, 0, 1);
-        shapeRenderer.rect(x, y, SIZE, SIZE);
-        shapeRenderer.end();
-    }
-
     public void dispose() {
+        if (spriteSheet != null) spriteSheet.dispose();
         shapeRenderer.dispose();
     }
 }
