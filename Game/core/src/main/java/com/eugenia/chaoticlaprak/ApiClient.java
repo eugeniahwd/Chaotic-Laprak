@@ -8,7 +8,7 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.JsonReader;
 
 public class ApiClient {
-    private static final String BASE_URL = "https://chaotic-laprak-8dy-production.up.railway.app";
+    private static final String BASE_URL = "http://chaotic-laprak-8dy-production.up.railway.app";
     private static Long playerId = null;
     private static Long sessionId = null;
 
