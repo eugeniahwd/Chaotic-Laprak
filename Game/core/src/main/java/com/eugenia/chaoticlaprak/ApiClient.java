@@ -8,7 +8,7 @@ import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.JsonReader;
 
 public class ApiClient {
-    private static final String BASE_URL = "http://chaotic-laprak-8dy-production.up.railway.app";
+    private static final String BASE_URL = "https://chaotic-laprak-8dy-production.up.railway.app";
     private static Long playerId = null;
     private static Long sessionId = null;
 
@@ -31,16 +31,28 @@ public class ApiClient {
         Gdx.net.sendHttpRequest(req, new Net.HttpResponseListener() {
             @Override
             public void handleHttpResponse(Net.HttpResponse response) {
+                System.out.println("LOGIN STATUS: " + response.getStatus().getStatusCode());
+                String responseBody = response.getResultAsString();
+                System.out.println("LOGIN BODY: " + responseBody);
                 if (response.getStatus().getStatusCode() == 200) {
-                    JsonValue json = new JsonReader().parse(response.getResultAsString());
-                    playerId = json.getLong("id");
-                    onSuccess.run();
+                    try {
+                        JsonValue json = new JsonReader().parse(responseBody);
+                        playerId = json.getLong("id");
+                        System.out.println("playerId set to: " + playerId);
+                        onSuccess.run();
+                    } catch (Exception e) {
+                        System.out.println("Parse error: " + e.getMessage());
+                        onFail.run();
+                    }
                 } else {
                     onFail.run();
                 }
             }
             @Override
-            public void failed(Throwable t) { onFail.run(); }
+            public void failed(Throwable t) {
+                System.out.println("FAILED: " + t.getMessage());
+                onFail.run();
+            }
             @Override
             public void cancelled() { onFail.run(); }
         });
@@ -69,7 +81,10 @@ public class ApiClient {
                 }
             }
             @Override
-            public void failed(Throwable t) { onFail.run(); }
+            public void failed(Throwable t) {
+                System.out.println("FAILED: " + t.getMessage());
+                onFail.run();
+            }
             @Override
             public void cancelled() { onFail.run(); }
         });
@@ -77,7 +92,11 @@ public class ApiClient {
 
     // Start session
     public static void startSession(Runnable onSuccess) {
-        if (playerId == null) return;
+        System.out.println("START SESSION called, playerId: " + playerId);
+        if (playerId == null) {
+            System.out.println("playerId is NULL, aborting!");
+            return;
+        }
 
         Net.HttpRequest req = new HttpRequestBuilder()
             .newRequest()
@@ -89,6 +108,8 @@ public class ApiClient {
         Gdx.net.sendHttpRequest(req, new Net.HttpResponseListener() {
             @Override
             public void handleHttpResponse(Net.HttpResponse response) {
+                System.out.println("SESSION STATUS: " + response.getStatus().getStatusCode());
+                System.out.println("SESSION BODY: " + response.getResultAsString());
                 if (response.getStatus().getStatusCode() == 200) {
                     JsonValue json = new JsonReader().parse(response.getResultAsString());
                     sessionId = json.getLong("id");
@@ -96,7 +117,9 @@ public class ApiClient {
                 }
             }
             @Override
-            public void failed(Throwable t) {}
+            public void failed(Throwable t) {
+                System.out.println("FAILED: " + t.getMessage());
+            }
             @Override
             public void cancelled() {}
         });
@@ -125,7 +148,9 @@ public class ApiClient {
                 }
             }
             @Override
-            public void failed(Throwable t) {}
+            public void failed(Throwable t) {
+                System.out.println("FAILED: " + t.getMessage());
+            }
             @Override
             public void cancelled() {}
         });
